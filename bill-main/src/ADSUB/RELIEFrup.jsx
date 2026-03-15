@@ -29,10 +29,19 @@ function About() {
 
 export default About;
 */
-import RuleTable from "../RuleTable";
+/*import RuleTable from "../RuleTable";
 
 const RELIEF = () => {
   return <RuleTable ruleName="RELIEF" />;
 };
 
 export default RELIEF;
+*/
+
+import RuleTable from "../RuleTable";
+
+const RELIEFrup = () => {
+  return <RuleTable ruleName="RELIEF" />;
+};
+
+export default RELIEFrup;

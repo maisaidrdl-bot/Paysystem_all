@@ -29,10 +29,18 @@ function About() {
 
 export default About;
 */
-import RuleTable from "../RuleTable";
+/*import RuleTable from "../RuleTable";
 
 const HRA = () => {
   return <RuleTable ruleName="HRA" />;
 };
 
-export default HRA;
+export default HRArup;*/
+
+import RuleTable from "../RuleTable";
+
+const HRArup = () => {
+  return <RuleTable ruleName="HRA" />;
+};
+
+export default HRArup;

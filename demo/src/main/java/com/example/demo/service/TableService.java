@@ -1,12 +1,16 @@
 package com.example.demo.service;
 
-import java.util.HashMap;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.RuleResponse;
+import com.example.demo.entity.RuleEntity;
+import com.example.demo.entity.RuleEntityId;
 import com.example.demo.repository.TableRepository;
 
 @Service
@@ -15,177 +19,192 @@ public class TableService {
     @Autowired
     private TableRepository repo;
 
-    
+
+
     // FETCH LOGIC
-    
-    public List<Map<String,Object>> fetchLogic(String ruleName){
-        
-        // 🔁 ruleName is business name
-        // Repository uses col1 internally
-        return repo.fetchQuery(ruleName);
+
+    public List<RuleResponse> fetchLogic(String ruleName){
+
+        List<RuleEntity> list = repo.findByRuleTypeOrderByIdDesc(ruleName);
+
+        List<RuleResponse> result = new ArrayList<>();
+
+        for(RuleEntity e : list){
+
+            // RULE 1
+            if(ruleName.equals("HRA")){
+
+                result.add(new RuleResponse(
+                        e.getRuleType(),
+                        e.getId(),
+                        e.getPercent(),
+                        null,
+                        String.valueOf(e.getDefinedDate()),
+                        String.valueOf(e.getSystemDate()),
+                        e.getRemarks()
+                ));
+            }
+
+            // RULE 2
+            else if(ruleName.equals("DA")){
+
+                result.add(new RuleResponse(
+                        e.getRuleType(),
+                        e.getId(),
+                        e.getPercent(),
+                         null,
+                       String.valueOf(e.getDefinedDate()),
+                       String.valueOf(e.getSystemDate()),
+                        e.getRemarks()
+                ));
+            }
+
+            // RULE 3
+            else if(ruleName.equals("RELIEF")){
+
+                result.add(new RuleResponse(
+                        e.getRuleType(),
+                        e.getId(),
+                        null,
+                        e.getAmount(),
+                        String.valueOf(e.getDefinedDate()),
+                        String.valueOf(e.getSystemDate()),
+                        e.getRemarks()
+                ));
+            }
+        }
+
+        return result;
     }
 
 
-    
+
     // ADD LOGIC
-    
-    //public void addLogic(Map<String,Object> req){
 
-        // 🔁 CHANGE HERE if your frontend uses different name
-        //String ruleName = (String) req.get("ruleName");
+    public void addLogic(RuleEntity entity){
 
-        // get max serial for this rule
-        // Integer maxSerial = repo.getMaxSerial(ruleName);
+        LocalDate sysDate = LocalDate.now();
 
-        //Integer newSerial = maxSerial + 1;
+        //LocalDate effDate =  entity.getDefinedDate().toLocalDate();
+        LocalDate effDate =
+        entity.getDefinedDate().toInstant()
+        .atZone(java.time.ZoneId.systemDefault())
+        .toLocalDate().withDayOfMonth(1);
 
-        // 🔁 If your date key is different, change below
-        //Date monthYear = (Date) req.get("monthYear");
+        // Month Year validation
+        if(sysDate.getMonthValue() != effDate.getMonthValue()
+                ||
+                sysDate.getYear() != effDate.getYear()){
 
-        //repo.insertQuery(req, newSerial, monthYear);
-    //}
-   public void addLogic(Map<String,Object> req) {
-
-    //  1. ruleName (REQUIRED) 
-    String ruleName = req.get("ruleName") != null 
-            ? req.get("ruleName").toString().trim() 
-            : null;
-
-    if(ruleName == null || ruleName.isEmpty()){
-        throw new RuntimeException("ruleName is required");
-    }
-
-    //  2. serial (SAFE) 
-    Integer maxSerial = repo.getMaxSerial(ruleName);
-    if(maxSerial == null){
-        maxSerial = 0;
-    }
-    Integer newSerial = maxSerial + 1;
-
-    //  3. percent (SAFE NUMBER) 
-    Double percent = null;
-    if(req.get("percent") != null){
-        try{
-            percent = Double.valueOf(req.get("percent").toString());
-        }catch(NumberFormatException ex){
-            percent = null;
+            throw new RuntimeException(
+                    "Effective month must match system month");
         }
-    }
 
-    //  4. amount (SAFE NUMBER) 
-    Double amount = null;
-    if(req.get("amount") != null){
-        try{
-            amount = Double.valueOf(req.get("amount").toString());
-        }catch(NumberFormatException ex){
-            amount = null;
+        // Serial generation
+        List<RuleEntity> list =
+                repo.findByRuleTypeOrderByIdDesc(entity.getRuleType());
+
+        //int maxSerial = 0;
+        Long maxSerial = 0L;
+
+        for(RuleEntity e : list){
+
+            if(e.getId() > maxSerial){
+
+                maxSerial = e.getId();
+            }
         }
+
+        entity.setId(maxSerial + 1L);
+
+        entity.setSystemDate(
+                new Date(System.currentTimeMillis()));
+
+        repo.save(entity);
     }
 
-    //  5. monthYear (SAFE DATE) 
-    java.sql.Date monthYear = null;
-    if(req.get("monthYear") != null){
-        try{
-            monthYear = java.sql.Date.valueOf(req.get("monthYear").toString());
-        }catch(Exception ex){
-            monthYear = null;   // fallback
-        }
-    }
-
-    // 6. remark 
-    String remark = req.get("remark") != null 
-            ? req.get("remark").toString() 
-            : null;
-
-    // 7. Create new safe map
-    Map<String,Object> data = new HashMap<>();
-    data.put("ruleName", ruleName);
-    data.put("percent", percent);
-    data.put("amount", amount);
-    data.put("remark", remark);
-
-    // 8. FINAL CALL 
-    try{
-        repo.insertQuery(data, newSerial, monthYear);
-    }catch(Exception e){
-        e.printStackTrace();
-        throw new RuntimeException("Database Insert Failed: " + e.getMessage());
-    }
-}
 
 
-    
     // UPDATE NAVIGATION CHECK
-    
-    public Boolean allowUpdateLogic(
-            String ruleName,
-            Integer serialNo){
 
-        Integer count;
-        count = repo.checkUpdateAllowed(
-                ruleName,
-                serialNo);
+    public boolean allowUpdate(String ruleName,
+                               Long serialNo){
 
-        return count == 0;
+        RuleEntityId id =
+                new RuleEntityId((long) serialNo, ruleName);
+
+        RuleEntity entity =
+                repo.findById(id).orElse(null);
+
+        if(entity == null) return false;
+
+        LocalDate sysDate = LocalDate.now();
+
+        //LocalDate effDate =
+           //     entity.getDefinedDate().toLocalDate();
+
+           LocalDate effDate =
+        entity.getDefinedDate().toInstant()
+        .atZone(java.time.ZoneId.systemDefault())
+        .toLocalDate();
+
+        return sysDate.getMonthValue()
+                ==
+                effDate.getMonthValue()
+                &&
+                sysDate.getYear()
+                ==
+                effDate.getYear();
     }
 
 
-    
+
     // UPDATE LOGIC
-    
-    public void updateLogic(Map<String,Object> req){
 
-        // 🔁 CHANGE if frontend uses different key names
-        repo.updateQuery(req);
+    public void updateLogic(RuleEntity newData){
+
+        RuleEntityId id =
+                new RuleEntityId(
+        newData.getId(),
+        newData.getRuleType());
+
+        RuleEntity old =
+                repo.findById(id).orElseThrow();
+
+        // Only allowed fields
+
+        old.setPercent(newData.getPercent());
+        old.setAmount(newData.getAmount());
+        old.setRemarks(newData.getRemarks());
+
+        old.setSystemDate(
+                new Date(System.currentTimeMillis()));
+
+        repo.save(old);
     }
 
 
-    
+
     // DELETE NAVIGATION CHECK
-    
-    public Boolean allowDeleteLogic(
-            String ruleName,
-            Integer serialNo){
 
-        Integer count = repo.checkDeleteAllowed(
-                ruleName,
-                serialNo);
+    public boolean allowDelete(String ruleName,
+                               Long serialNo){
 
-        return count == 0;
+        return allowUpdate(ruleName,serialNo);
     }
 
 
-    
+
     // DELETE LOGIC
-    
-    //public void deleteLogic(Map<String,Object> req){
 
-        // 🔁 CHANGE if frontend keys are different
-      //  String ruleName = (String) req.get("ruleName");
-      //  Integer serialNo =
-    //Integer.parseInt(req.get("serialNo").toString());
+    public void deleteLogic(String ruleName,
+                            Long serialNo){
 
-        //repo.deleteQuery(ruleName, serialNo);
-    //}
-    public void deleteLogic(Map<String,Object> req){
+        
+           RuleEntityId id =
+        new RuleEntityId(serialNo,ruleName );
 
-    String ruleName = req.get("ruleName") != null 
-            ? req.get("ruleName").toString() 
-            : null;
-
-    if(ruleName == null){
-        throw new RuntimeException("ruleName required");
+        repo.deleteById(id);
     }
 
-    Integer serialNo = null;
-    if(req.get("serialNo") != null){
-        try{
-            serialNo = Integer.valueOf(req.get("serialNo").toString());
-        }catch(NumberFormatException ex){
-            throw new RuntimeException("Invalid serialNo");
-        }
-    }
-
-    repo.deleteQuery(ruleName, serialNo);
-}
 }

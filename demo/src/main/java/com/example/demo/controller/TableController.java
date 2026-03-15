@@ -1,94 +1,110 @@
 package com.example.demo.controller;
+
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.dto.RuleResponse;
+import com.example.demo.entity.RuleEntity;
 import com.example.demo.service.TableService;
- @CrossOrigin
+
 @RestController
 @RequestMapping("/api")
+@CrossOrigin
 public class TableController {
 
     @Autowired
-    private TableService serviceFun;
-
-    
-    // FETCH SECTION
-    
-   @GetMapping("/fetch")
-public List<Map<String,Object>> fetchFun(
-        @RequestParam String ruleName){
-
-    return serviceFun.fetchLogic(ruleName);
-}
+    private TableService service;
 
 
-    
-    // ADD SECTION
-    
+
+    // 1️⃣ FETCH DATA
+    // frontend calls: /rule/fetch?ruleName=RULE1
+
+    @GetMapping("/fetch")
+    public List<RuleResponse> fetch(
+            @RequestParam String ruleName){
+
+        return service.fetchLogic(ruleName);
+    }
+
+
+
+    // 2️⃣ ADD ROW
+    // frontend sends JSON
+
     @PostMapping("/add")
-    public String addFun(
-            @RequestBody Map<String,Object> req){
+    public String add(
+            @RequestBody RuleEntity entity){
 
-        serviceFun.addLogic(req);
-        return "saved";
+        service.addLogic(entity);
+
+        return "Row Added Successfully";
     }
 
 
-    
-    // UPDATE NAVIGATION CHECK
-    
+
+    // 3️⃣ UPDATE NAVIGATION CHECK
+    // frontend checks before opening update page
+
     @GetMapping("/allowUpdate")
-    public Boolean allowUpdate(
+
+    public boolean allowUpdate(
             @RequestParam String ruleName,
-            @RequestParam Integer serialNo){
+            @RequestParam Long serialNo){
 
-        return serviceFun.allowUpdateLogic(
-                ruleName,serialNo);
+        return service.allowUpdate(ruleName, serialNo);
     }
 
 
-    
-    // UPDATE SECTION
-    
-    @PostMapping("/update")
-    public String updateFun(
-            @RequestBody Map<String,Object> req){
 
-        serviceFun.updateLogic(req);
-        return "updated";
+    // 4️⃣ UPDATE DATA
+
+    @PutMapping("/update")
+
+    public String update(
+            @RequestBody RuleEntity entity){
+
+        service.updateLogic(entity);
+
+        return "Row Updated Successfully";
     }
 
 
-    
-    // DELETE NAVIGATION CHECK
-    
+
+    // 5️⃣ DELETE NAVIGATION CHECK
+
     @GetMapping("/allowDelete")
-    public Boolean allowDelete(
+
+    public boolean allowDelete(
             @RequestParam String ruleName,
-            @RequestParam Integer serialNo){
+            @RequestParam Long serialNo){
 
-        return serviceFun.allowDeleteLogic(
-                ruleName,serialNo);
+        return service.allowDelete(ruleName, serialNo);
     }
 
 
-    
-    // DELETE SECTION
-    
-    @PostMapping("/delete")
-    public String deleteFun(
-            @RequestBody Map<String,Object> req){
 
-        serviceFun.deleteLogic(req);
-        return "deleted";
+    // 6️⃣ DELETE ROW
+
+    @DeleteMapping("/delete")
+
+    public String delete(
+            @RequestParam String ruleName,
+            @RequestParam Long serialNo){
+
+        service.deleteLogic(ruleName, serialNo);
+
+        return "Row Deleted Successfully";
     }
+
 }

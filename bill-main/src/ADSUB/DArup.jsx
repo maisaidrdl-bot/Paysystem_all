@@ -29,10 +29,20 @@ function About() {
 
 export default About;
 */
-import RuleTable from "../RuleTable";
+/*import RuleTable from "../RuleTable";
 
 const DA = () => {
   return <RuleTable ruleName="DA" />;
 };
 
-export default DA;
+export default DA;*/
+
+
+
+import RuleTable from "../RuleTable";
+
+const DARup = () => {
+  return <RuleTable ruleName="DA" />;
+};
+
+export default DARup;

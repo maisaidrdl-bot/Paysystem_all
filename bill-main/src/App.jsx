@@ -7,28 +7,37 @@ import DARup from "./ADSUB/DArup";
 import HRARup from "./ADSUB/HRArup";
 import RELIEFRup from "./ADSUB/RELIEFrup";
 import "./App.css";
-import RuleTable from "./RuleTable";
+import AddRule from "./AddRule";
+import UpdateRule from "./UpdateRule";
 
 function App() {
   return (
     <div>
+
       <h1>PAY SYSTEM</h1>
 
       <Routes>
+
         <Route path="/" element={<Home />} />
-         <Route path="/administration" element={<ADMINISTRATION />} />
+
+        <Route path="/administration" element={<ADMINISTRATION />} />
+
         <Route path="/adrup" element={<RUP />} />
+
         <Route path="/adwup" element={<WUP />} />
-         <Route path="/darup/DA" element={<DARup />} />
+
+        <Route path="/darup/DA" element={<DARup />} />
+
         <Route path="/darup/HRA" element={<HRARup />} />
-         <Route path="/darup/RELIEF" element={<RELIEFRup />} />
-      </Routes>
+
+        <Route path="/darup/RELIEF" element={<RELIEFRup />} />
+
+<Route path="/add" element={<AddRule />} />
+<Route path="/update" element={<UpdateRule />} />
+     </Routes>
+
     </div>
   );
 }
 
 export default App;
-
-   
-
-
